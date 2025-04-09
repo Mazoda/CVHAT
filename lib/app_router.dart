@@ -1,6 +1,7 @@
 import 'package:awesome_snackbar_content/awesome_snackbar_content.dart';
 import 'package:cvhat/core/resources/app_colors.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:toastification/toastification.dart';
 
 class AppRouter {
@@ -76,19 +77,99 @@ class AppRouter {
       ));
   }
 
+  static ToastificationItem? _currentToast;
+
   static toastificationSnackBar(
       String title, String description, ToastificationType type) {
-    return toastification.show(
-        style: ToastificationStyle.minimal,
-        overlayState: navKey.currentState?.overlay,
-        primaryColor: AppColors.secondary,
-        title: Text(title, style: const TextStyle(color: AppColors.textBlack)),
-        description: RichText(
-            text: TextSpan(
-                text: description,
-                style: const TextStyle(color: AppColors.textBlack))),
-        autoCloseDuration: const Duration(seconds: 5),
-        type: type);
+    if (_currentToast != null) {
+      toastification.dismiss(_currentToast!);
+      _currentToast = null;
+    }
+
+    final backgroundColor = _getBackgroundColor(type);
+    final icon = _getIcon(type, backgroundColor);
+
+    _currentToast = toastification.showCustom(
+      context: navKey.currentContext,
+      overlayState: navKey.currentState?.overlay,
+      autoCloseDuration: const Duration(seconds: 3),
+      alignment: Alignment.topCenter,
+      builder: (context, toastItem) {
+        return Container(
+          margin: EdgeInsets.symmetric(horizontal: 25.w, vertical: 0),
+          decoration: BoxDecoration(
+            boxShadow: [
+              BoxShadow(
+                color: backgroundColor.withValues(alpha: 0.1),
+                offset: const Offset(0, 4),
+                blurRadius: 6,
+                spreadRadius: 2,
+              ),
+            ],
+            color: AppColors.bgWhite,
+            borderRadius: BorderRadius.circular(12.r),
+          ),
+          child: Container(
+            alignment: Alignment.topCenter,
+            padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 8.h),
+            decoration: BoxDecoration(
+                color: backgroundColor.withValues(alpha: 0.05),
+                borderRadius: BorderRadius.circular(12.r),
+                border: Border.all(color: backgroundColor)),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                icon,
+                SizedBox(
+                  width: 270.w,
+                  child: Text(description,
+                      maxLines: 3,
+                      textAlign: TextAlign.left,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                          color: AppColors.textBlack, fontSize: 14.sp)),
+                ),
+                SizedBox(
+                  width: 10.w,
+                )
+              ],
+            ),
+          ),
+        );
+      },
+    );
+    return _currentToast;
+  }
+}
+
+Color _getBackgroundColor(ToastificationType type) {
+  switch (type) {
+    case ToastificationType.success:
+      return Colors.green;
+    case ToastificationType.error:
+      return Colors.red;
+    case ToastificationType.warning:
+      return Colors.orange;
+    case ToastificationType.info:
+    default:
+      return Colors.blue;
+  }
+}
+
+Icon _getIcon(ToastificationType type, Color color) {
+  switch (type) {
+    case ToastificationType.success:
+      return Icon(Icons.check_circle_outline_rounded, color: color);
+    case ToastificationType.error:
+      return Icon(
+        Icons.cancel_outlined,
+        color: color,
+      );
+    case ToastificationType.warning:
+      return Icon(Icons.warning_amber_rounded, color: color);
+    case ToastificationType.info:
+    default:
+      return Icon(Icons.info_outline_rounded, color: color);
   }
 }
 
