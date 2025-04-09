@@ -77,8 +77,6 @@ class ProfileProvider extends ChangeNotifier {
           lastNameController.text.isEmpty &&
           oldPasswordController.text.isEmpty &&
           newPasswordController.text.isEmpty) {
-        AppRouter.toastificationSnackBar(
-            "All Set", "Nothing To Be Updated!", ToastificationType.info);
         return;
       }
 
