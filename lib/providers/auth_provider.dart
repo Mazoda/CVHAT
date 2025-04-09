@@ -1,10 +1,9 @@
 import 'package:cvhat/app_router.dart';
 import 'package:cvhat/providers/auth_form_provider.dart';
-import 'package:cvhat/providers/ui_provider.dart';
 import 'package:cvhat/services/local_storage_service.dart';
 import 'package:cvhat/views/auth/register_screen.dart';
 import 'package:cvhat/views/home_screen/home_page.dart';
-import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:toastification/toastification.dart';
 import '../models/user_model.dart';
 import '../services/auth_service.dart';
@@ -17,11 +16,19 @@ class AuthProvider extends ChangeNotifier {
   bool isLoading = false;
   late String error;
   late String message;
-  late var user;
+  late dynamic user;
 
   Future login() async {
     isLoading = true;
     notifyListeners();
+
+    if (authFormProvider.validateRequiredLoginForm()) {
+      AppRouter.toastificationSnackBar(
+          "Error", "All Fields Are Required!", ToastificationType.error);
+      isLoading = false;
+      notifyListeners();
+      return;
+    }
 
     if (!authFormProvider.validateLoginForm()) {
       String emailError = authFormProvider.emailError;
@@ -72,7 +79,9 @@ class AuthProvider extends ChangeNotifier {
 
   Future<void> loadUser() async {
     final userData = await localStorageService.loadUserData();
-    print(userData);
+    if (kDebugMode) {
+      print(userData);
+    }
     if (userData['auth_token'] != null) {
       user = User(
         token: userData['auth_token']!,
@@ -104,15 +113,12 @@ class AuthProvider extends ChangeNotifier {
   }
 
   Future<bool> signUp() async {
+    if (authFormProvider.validateRequiredSignUpForm()) {
+      AppRouter.toastificationSnackBar(
+          "Error", "All Fields Are Required!", ToastificationType.error);
+      return false;
+    }
     if (!authFormProvider.validateSignUpForm()) {
-      if (authFormProvider.firstNameError.isNotEmpty) {
-        AppRouter.toastificationSnackBar(
-            "Error", authFormProvider.firstNameError, ToastificationType.error);
-      }
-      if (authFormProvider.lastNameError.isNotEmpty) {
-        AppRouter.toastificationSnackBar(
-            "Error", authFormProvider.lastNameError, ToastificationType.error);
-      }
       if (authFormProvider.emailError.isNotEmpty) {
         AppRouter.toastificationSnackBar(
             "Error", authFormProvider.emailError, ToastificationType.error);
