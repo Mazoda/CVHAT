@@ -1,6 +1,6 @@
 import 'package:cvhat/app_router.dart';
 import 'package:cvhat/services/local_storage_service.dart';
-import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:toastification/toastification.dart';
 import '../models/review_model.dart';
 import '../services/reviews_service.dart';
@@ -53,13 +53,17 @@ class ReviewsProvider extends ChangeNotifier {
     _isLoading = true;
     _errorMessage = null;
     notifyListeners();
-    print("test in fetch provider");
+    if (kDebugMode) {
+      print("test in fetch provider");
+    }
     try {
       String? userToken = await localStorageService.getUserToken();
       _recentReviews = await _reviewsService.fetchRecentReviews(userToken!);
     } catch (e) {
       _errorMessage = e.toString();
-      print(e.toString());
+      if (kDebugMode) {
+        print(e.toString());
+      }
       AppRouter.toastificationSnackBar(
           "Error", _errorMessage!, ToastificationType.error);
     } finally {
@@ -76,8 +80,6 @@ class ReviewsProvider extends ChangeNotifier {
     try {
       String? userToken = await localStorageService.getUserToken();
       _favoriteReviews = await _reviewsService.fetchFavoriteReviews(userToken!);
-      AppRouter.toastificationSnackBar("Success",
-          "All Favorite Reviews Retrieved!", ToastificationType.error);
     } catch (e) {
       _errorMessage = e.toString();
       AppRouter.toastificationSnackBar(
