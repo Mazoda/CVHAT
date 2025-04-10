@@ -12,6 +12,10 @@ class ReviewsService {
     connectTimeout: const Duration(seconds: 20),
     receiveTimeout: const Duration(seconds: 20),
   ));
+  final Dio _dioPostCV = Dio(BaseOptions(
+    connectTimeout: const Duration(seconds: 20),
+    receiveTimeout: const Duration(seconds: 60),
+  ));
 
   Future<List<Review>> _fetchReviews(String userToken, String endpoint) async {
     try {
@@ -109,7 +113,7 @@ class ReviewsService {
       );
 
       FormData data = FormData.fromMap({'cv': multiPartFile});
-      Response response = await _dio.post(
+      Response response = await _dioPostCV.post(
         ApiEndPoints.postUserCv,
         options: Options(
           headers: {
@@ -132,7 +136,7 @@ class ReviewsService {
   Future<Review> postAiReview(String userToken, int cvID, String title) async {
     try {
       print("getting review in Service");
-      Response response = await _dio.post(
+      Response response = await _dioPostCV.post(
         ApiEndPoints.postAiReview,
         options: Options(
           headers: {
