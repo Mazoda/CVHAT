@@ -80,7 +80,7 @@ class UiProvider extends ChangeNotifier {
 
   void changeEditProfile() {
     editProfile = !editProfile;
-    containerHeight = editProfile ? 320 : 0;
+    containerHeight = editProfile ? 300 : 0;
     notifyListeners();
   }
 }
