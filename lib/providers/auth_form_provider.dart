@@ -13,23 +13,10 @@ class AuthFormProvider extends ChangeNotifier {
   final TextEditingController confirmPasswordController =
       TextEditingController();
 
-  String firstNameError = "";
-  String lastNameError = "";
+  String required = "";
   String emailError = "";
   String passwordError = "";
   String confirmPasswordError = "";
-
-  void validateFirstName() {
-    firstNameError =
-        firstNameController.text.isEmpty ? 'First name is required' : "";
-    notifyListeners();
-  }
-
-  void validateLastName() {
-    lastNameError =
-        lastNameController.text.isEmpty ? 'Last name is required' : "";
-    notifyListeners();
-  }
 
   void validateEmail() {
     String email = emailController.text;
@@ -64,22 +51,30 @@ class AuthFormProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  bool validateRequiredLoginForm() {
+    return emailController.text.isEmpty || passwordController.text.isEmpty;
+  }
+
   bool validateLoginForm() {
     validateEmail();
     validatePassword();
     return emailError.isEmpty && passwordError.isEmpty;
   }
 
+  bool validateRequiredSignUpForm() {
+    return firstNameController.text.isEmpty ||
+        lastNameController.text.isEmpty ||
+        emailController.text.isEmpty ||
+        passwordController.text.isEmpty ||
+        confirmPasswordController.text.isEmpty;
+  }
+
   bool validateSignUpForm() {
-    validateFirstName();
-    validateLastName();
     validateEmail();
     validatePassword();
     validateConfirmPassword();
 
-    return firstNameError.isEmpty &&
-        lastNameError.isEmpty &&
-        emailError.isEmpty &&
+    return emailError.isEmpty &&
         passwordError.isEmpty &&
         confirmPasswordError.isEmpty;
   }

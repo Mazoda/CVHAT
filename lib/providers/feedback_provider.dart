@@ -83,8 +83,8 @@ class FeedBackProvider extends ChangeNotifier {
       postCVResponse = await _reviewsService.postCV(userToken!, selectedFile);
       notifyListeners();
       if (postCVResponse != null) {
-        AppRouter.toastificationSnackBar(
-            "Success", "CV uploaded successfully", ToastificationType.success);
+        // AppRouter.toastificationSnackBar(
+        //     "Success", "CV uploaded successfully", ToastificationType.success);
         await postAIReview();
       }
     } catch (e) {
@@ -115,7 +115,7 @@ class FeedBackProvider extends ChangeNotifier {
         print(e.toString());
       }
       AppRouter.toastificationSnackBar(
-          "Error", "Error PostingAi Review", ToastificationType.error);
+          "Error", "Error Posting Ai Review", ToastificationType.error);
     } finally {
       _isAnalyzing = false;
       notifyListeners();
@@ -136,13 +136,9 @@ class FeedBackProvider extends ChangeNotifier {
       toggleIsReviewFavorite();
       isReviewFavorite
           ? AppRouter.toastificationSnackBar(
-              "Success",
-              "This Review Added to your Favorites.",
-              ToastificationType.success)
-          : AppRouter.toastificationSnackBar(
-              "Success",
-              "This Review Removed From your Favorites.",
-              ToastificationType.success);
+              "Success", "Added to your Favorites.", ToastificationType.info)
+          : AppRouter.toastificationSnackBar("Success",
+              "Removed From your Favorites.", ToastificationType.info);
     } catch (e) {
       if (kDebugMode) {
         print(e.toString());
