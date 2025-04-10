@@ -78,9 +78,13 @@ class AppRouter {
   }
 
   static ToastificationItem? _currentToast;
+  static bool _isShowing = false;
 
   static toastificationSnackBar(
-      String title, String description, ToastificationType type) {
+      String title, String description, ToastificationType type) async {
+    if (_isShowing) return;
+    _isShowing = true;
+
     if (_currentToast != null) {
       toastification.dismiss(_currentToast!);
       _currentToast = null;
@@ -138,7 +142,9 @@ class AppRouter {
         );
       },
     );
-    return _currentToast;
+    //return _currentToast;
+    await Future.delayed(const Duration(seconds: 3));
+    _isShowing = false;
   }
 }
 
