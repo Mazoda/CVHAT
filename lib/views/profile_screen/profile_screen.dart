@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:cvhat/app_router.dart';
 import 'package:cvhat/core/resources/app_colors.dart';
+import 'package:cvhat/core/resources/app_icons.dart';
 import 'package:cvhat/providers/file_picker_provider.dart';
 import 'package:cvhat/providers/profile_provider.dart';
 import 'package:cvhat/providers/ui_provider.dart';
@@ -64,7 +65,7 @@ class ProfileScreen extends StatelessWidget {
                                     height: 133.h,
                                   ),
                                   Text(
-                                    "${profileProvider.profile!.firstName} ${profileProvider.profile!.lastName}",
+                                    "${profileProvider.profile?.firstName ?? ""} ${profileProvider.profile?.lastName ?? ""}",
                                     textAlign: TextAlign.center,
                                     maxLines: 2,
                                     overflow: TextOverflow.fade,
@@ -77,7 +78,7 @@ class ProfileScreen extends StatelessWidget {
                                     height: 10.h,
                                   ),
                                   Text(
-                                    profileProvider.profile!.email,
+                                    profileProvider.profile?.email ?? "",
                                     textAlign: TextAlign.center,
                                     maxLines: 2,
                                     style: TextStyle(
@@ -240,52 +241,61 @@ class ProfileScreen extends StatelessWidget {
                                 child: ClipRRect(
                                     borderRadius: BorderRadius.circular(78.r),
                                     child: profileProvider.selectedFile == null
-                                        ? Image.network(
-                                            width: 160.w,
-                                            height: 160.w,
-                                            profileProvider
-                                                    .profile?.avatarURL ??
-                                                "",
-                                            fit: BoxFit.cover,
-                                            loadingBuilder:
-                                                (BuildContext context,
-                                                    Widget child,
-                                                    ImageChunkEvent?
-                                                        loadingProgress) {
-                                              if (loadingProgress == null) {
-                                                return child;
-                                              } else {
-                                                return Center(
-                                                  child:
-                                                      CircularProgressIndicator(
-                                                    color: AppColors.bgWhite,
-                                                    value: loadingProgress
-                                                                .expectedTotalBytes !=
-                                                            null
-                                                        ? loadingProgress
-                                                                .cumulativeBytesLoaded /
-                                                            (loadingProgress
-                                                                    .expectedTotalBytes ??
-                                                                1)
-                                                        : null,
-                                                  ),
-                                                );
-                                              }
-                                            },
-                                            errorBuilder:
-                                                (context, child, stackTrace) {
-                                              return Text(
+                                        ? profileProvider.profile?.avatarURL ==
+                                                null
+                                            ? Image.asset(
+                                                AppIcons.logo,
+                                                width: 130.w,
+                                                height: 130.w,
+                                              )
+                                            : Image.network(
+                                                width: 160.w,
+                                                height: 160.w,
                                                 profileProvider
-                                                        .profile!.firstName[0] +
-                                                    profileProvider
-                                                        .profile!.lastName[0],
-                                                style: TextStyle(
-                                                    fontWeight: FontWeight.bold,
-                                                    fontSize: 64.sp,
-                                                    color: AppColors.textWhite),
-                                              );
-                                            },
-                                          )
+                                                    .profile!.avatarURL!,
+                                                fit: BoxFit.cover,
+                                                loadingBuilder:
+                                                    (BuildContext context,
+                                                        Widget child,
+                                                        ImageChunkEvent?
+                                                            loadingProgress) {
+                                                  if (loadingProgress == null) {
+                                                    return child;
+                                                  } else {
+                                                    return Center(
+                                                      child:
+                                                          CircularProgressIndicator(
+                                                        color:
+                                                            AppColors.bgWhite,
+                                                        value: loadingProgress
+                                                                    .expectedTotalBytes !=
+                                                                null
+                                                            ? loadingProgress
+                                                                    .cumulativeBytesLoaded /
+                                                                (loadingProgress
+                                                                        .expectedTotalBytes ??
+                                                                    1)
+                                                            : null,
+                                                      ),
+                                                    );
+                                                  }
+                                                },
+                                                errorBuilder: (context, child,
+                                                    stackTrace) {
+                                                  return Text(
+                                                    profileProvider.profile!
+                                                            .firstName[0] +
+                                                        profileProvider.profile!
+                                                            .lastName[0],
+                                                    style: TextStyle(
+                                                        fontWeight:
+                                                            FontWeight.bold,
+                                                        fontSize: 64.sp,
+                                                        color: AppColors
+                                                            .textWhite),
+                                                  );
+                                                },
+                                              )
                                         : Image.file(
                                             File(profileProvider
                                                 .selectedFile!.path!),
