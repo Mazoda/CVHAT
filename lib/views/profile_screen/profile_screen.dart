@@ -62,7 +62,7 @@ class ProfileScreen extends StatelessWidget {
                               child: Column(
                                 children: [
                                   SizedBox(
-                                    height: 133.h,
+                                    height: 113.h,
                                   ),
                                   Text(
                                     "${profileProvider.profile?.firstName ?? ""} ${profileProvider.profile?.lastName ?? ""}",
