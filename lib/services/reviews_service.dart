@@ -31,10 +31,10 @@ class ReviewsService {
 
       if (response.statusCode == 200) {
         final List<dynamic> reviews = response.data["data"]["reviews"];
+        return reviews.map((json) => Review.fromJson(json)).toList();
 
-        if (reviews.isNotEmpty) {
-          return reviews.map((json) => Review.fromJson(json)).toList();
-        }
+        // if (reviews.isNotEmpty) {
+        // }
       }
       throw Exception("Failed to load reviews");
     } catch (e) {

@@ -2,7 +2,9 @@ import 'package:cvhat/app_router.dart';
 import 'package:cvhat/services/local_storage_service.dart';
 import 'package:flutter/foundation.dart';
 import 'package:toastification/toastification.dart';
+import '../core/resources/internet_exception.dart';
 import '../models/review_model.dart';
+import '../services/internet_connection_service.dart';
 import '../services/reviews_service.dart';
 
 class ReviewsProvider extends ChangeNotifier {
@@ -39,6 +41,9 @@ class ReviewsProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
+      if (!await InternetConnectionService.instance.hasConnection()) {
+        throw InternetException();
+      }
       String? userToken = await localStorageService.getUserToken();
       _reviews = await _reviewsService.fetchAllReviews(userToken!);
     } catch (e) {
@@ -57,6 +62,9 @@ class ReviewsProvider extends ChangeNotifier {
       print("test in fetch provider");
     }
     try {
+      if (!await InternetConnectionService.instance.hasConnection()) {
+        throw InternetException();
+      }
       String? userToken = await localStorageService.getUserToken();
       _recentReviews = await _reviewsService.fetchRecentReviews(userToken!);
     } catch (e) {
@@ -78,6 +86,9 @@ class ReviewsProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
+      if (!await InternetConnectionService.instance.hasConnection()) {
+        throw InternetException();
+      }
       String? userToken = await localStorageService.getUserToken();
       _favoriteReviews = await _reviewsService.fetchFavoriteReviews(userToken!);
     } catch (e) {
@@ -92,6 +103,9 @@ class ReviewsProvider extends ChangeNotifier {
 
   Future<void> fetchReviewsCounts() async {
     try {
+      if (!await InternetConnectionService.instance.hasConnection()) {
+        throw InternetException();
+      }
       String? userToken = await localStorageService.getUserToken();
       final res = await _reviewsService.fetchReviewsCounts(userToken!);
       _aiReviewsCount = res["aiReviewCount"].toString();

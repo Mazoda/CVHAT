@@ -36,7 +36,7 @@ class FavoriteScreen extends StatelessWidget {
         body: Consumer<ReviewsProvider>(
             builder: (context, reviewsProvider, child) {
           return reviewsProvider.isLoading
-              ? const Expanded(child: LoaderBlurScreen())
+              ? const LoaderBlurScreen()
               : reviewsProvider.favoriteReviews.isNotEmpty
                   ? SizedBox(
                       width: 390.w,
@@ -45,14 +45,12 @@ class FavoriteScreen extends StatelessWidget {
                           recentReviews: reviewsProvider.favoriteReviews,
                           scrollable: true),
                     )
-                  : const Expanded(
-                      child: EmptyListWidget(
-                        jsonFile: AppAnimations.favorite,
-                        title: "No Favorites!",
-                        showArrow: false,
-                        width: 280,
-                        height: 280,
-                      ),
+                  : const EmptyListWidget(
+                      jsonFile: AppAnimations.favorite,
+                      title: "No Favorites!",
+                      showArrow: false,
+                      width: 280,
+                      height: 280,
                     );
         }),
       ),

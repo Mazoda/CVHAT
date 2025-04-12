@@ -8,6 +8,9 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:toastification/toastification.dart';
 
+import '../core/resources/internet_exception.dart';
+import '../services/internet_connection_service.dart';
+
 class ProfileProvider extends ChangeNotifier {
   final ProfileService _profileService = ProfileService.profileService;
   Profile? _profile;
@@ -40,6 +43,9 @@ class ProfileProvider extends ChangeNotifier {
     _errorMessage = null;
     notifyListeners();
     try {
+      if (!await InternetConnectionService.instance.hasConnection()) {
+        throw InternetException();
+      }
       String? userToken = await localStorageService.getUserToken();
       _profile = await _profileService.getUserProfile(userToken!);
     } catch (e) {
@@ -58,6 +64,9 @@ class ProfileProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
+      if (!await InternetConnectionService.instance.hasConnection()) {
+        throw InternetException();
+      }
       if (selectedFile != null) {
         await _postAvatar();
       }
@@ -115,6 +124,9 @@ class ProfileProvider extends ChangeNotifier {
       if (kDebugMode) {
         print("Uploading Avatar in profile provider");
       }
+      if (!await InternetConnectionService.instance.hasConnection()) {
+        throw InternetException();
+      }
       String? userToken = await localStorageService.getUserToken();
       await _profileService.postAvatar(userToken!, selectedFile!);
       notifyListeners();
@@ -136,6 +148,9 @@ class ProfileProvider extends ChangeNotifier {
     _isLoading = true;
     notifyListeners();
     try {
+      if (!await InternetConnectionService.instance.hasConnection()) {
+        throw InternetException();
+      }
       String? userToken = await localStorageService.getUserToken();
       await _profileService.updateUserName(userToken!,
           firstNameController.text.trim(), lastNameController.text.trim());
@@ -169,6 +184,9 @@ class ProfileProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
+      if (!await InternetConnectionService.instance.hasConnection()) {
+        throw InternetException();
+      }
       String? userToken = await localStorageService.getUserToken();
       await _profileService.changePassword(userToken!,
           oldPasswordController.text.trim(), newPasswordController.text.trim());
