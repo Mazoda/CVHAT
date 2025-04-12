@@ -5,8 +5,10 @@ import 'package:cvhat/views/auth/register_screen.dart';
 import 'package:cvhat/views/home_screen/home_page.dart';
 import 'package:flutter/foundation.dart';
 import 'package:toastification/toastification.dart';
+import '../core/resources/internet_exception.dart';
 import '../models/user_model.dart';
 import '../services/auth_service.dart';
+import '../services/internet_connection_service.dart';
 
 class AuthProvider extends ChangeNotifier {
   final AuthService _authService = AuthService.authService;
@@ -19,9 +21,6 @@ class AuthProvider extends ChangeNotifier {
   late dynamic user;
 
   Future login() async {
-    isLoading = true;
-    notifyListeners();
-
     if (authFormProvider.validateRequiredLoginForm()) {
       AppRouter.toastificationSnackBar(
           "Error", "All Fields Are Required!", ToastificationType.error);
@@ -41,12 +40,15 @@ class AuthProvider extends ChangeNotifier {
         AppRouter.toastificationSnackBar(
             "Error", passError, ToastificationType.error);
       }
-      isLoading = false;
-      notifyListeners();
       return;
     }
 
     try {
+      isLoading = true;
+      notifyListeners();
+      if (!await InternetConnectionService.instance.hasConnection()) {
+        throw InternetException();
+      }
       String email = authFormProvider.emailController.text;
       String password = authFormProvider.passwordController.text;
       final responseData = await _authService.login(email, password);
@@ -98,7 +100,9 @@ class AuthProvider extends ChangeNotifier {
   Future<void> logout() async {
     isLoading = true;
     notifyListeners();
-
+    if (!await InternetConnectionService.instance.hasConnection()) {
+      throw InternetException();
+    }
     String? userToken = await localStorageService.getUserToken();
     bool res = await _authService.logout(userToken!);
     if (res) {
@@ -137,6 +141,9 @@ class AuthProvider extends ChangeNotifier {
     try {
       isLoading = true;
       notifyListeners();
+      if (!await InternetConnectionService.instance.hasConnection()) {
+        throw InternetException();
+      }
       String firstName = authFormProvider.firstNameController.text;
       String lastName = authFormProvider.lastNameController.text;
       String email = authFormProvider.emailController.text;

@@ -3,6 +3,9 @@ import 'package:cvhat/services/otp_service.dart';
 import 'package:flutter/material.dart';
 import 'package:toastification/toastification.dart';
 
+import '../core/resources/internet_exception.dart';
+import '../services/internet_connection_service.dart';
+
 class OTPProvider extends ChangeNotifier {
   final OTPService _otpService = OTPService.otpService;
 
@@ -56,7 +59,9 @@ class OTPProvider extends ChangeNotifier {
             "Error", "Invalid email format", ToastificationType.error);
         return;
       }
-
+      if (!await InternetConnectionService.instance.hasConnection()) {
+        throw InternetException();
+      }
       final response = await _otpService.sendOtp(trimmedEmail);
 
       if (response.statusCode != 200) {
@@ -93,7 +98,9 @@ class OTPProvider extends ChangeNotifier {
             "Error", "OTP must be 4 digits", ToastificationType.error);
         return;
       }
-
+      if (!await InternetConnectionService.instance.hasConnection()) {
+        throw InternetException();
+      }
       final response =
           await _otpService.verifyOtp(email.text.trim(), getOtpCode());
 
@@ -149,6 +156,9 @@ class OTPProvider extends ChangeNotifier {
 
     notifyListeners();
     try {
+      if (!await InternetConnectionService.instance.hasConnection()) {
+        throw InternetException();
+      }
       final response =
           await _otpService.resetPassword(_token!, newPassword.text.trim());
       if (response.statusCode == 200 && response.data["status"] == "success") {

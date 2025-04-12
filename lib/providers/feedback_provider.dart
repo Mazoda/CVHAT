@@ -9,6 +9,9 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:toastification/toastification.dart' show ToastificationType;
 
+import '../core/resources/internet_exception.dart';
+import '../services/internet_connection_service.dart';
+
 class FeedBackProvider extends ChangeNotifier {
   final LocalStorageService localStorageService =
       LocalStorageService.localStorageService;
@@ -41,6 +44,9 @@ class FeedBackProvider extends ChangeNotifier {
     AppRouter.pushWidget(const FeedbackPage());
 
     try {
+      if (!await InternetConnectionService.instance.hasConnection()) {
+        throw InternetException();
+      }
       String? userToken = await localStorageService.getUserToken();
       Review review =
           await _reviewsService.fetchReviewByID(userToken!, reviewId);
@@ -78,7 +84,9 @@ class FeedBackProvider extends ChangeNotifier {
       if (kDebugMode) {
         print("Uploading cv in provider Cv in Service");
       }
-
+      if (!await InternetConnectionService.instance.hasConnection()) {
+        throw InternetException();
+      }
       String? userToken = await localStorageService.getUserToken();
       postCVResponse = await _reviewsService.postCV(userToken!, selectedFile);
       notifyListeners();
@@ -107,6 +115,9 @@ class FeedBackProvider extends ChangeNotifier {
         print("getting review in provider Cv in Service");
         print("CV id is:${postCVResponse!.id!}");
       }
+      if (!await InternetConnectionService.instance.hasConnection()) {
+        throw InternetException();
+      }
       String? userToken = await localStorageService.getUserToken();
       singleFeedBack = await _reviewsService.postAiReview(
           userToken!, postCVResponse!.id!, submitCvController.text);
@@ -123,16 +134,22 @@ class FeedBackProvider extends ChangeNotifier {
   }
 
   Future toggleFavorite() async {
-    _isLoading = true;
-    notifyListeners();
-    if (singleFeedBack == null) {
-      AppRouter.toastificationSnackBar(
-          "Error", "Review Not Found", ToastificationType.error);
-      return;
-    }
     try {
+      _isLoading = true;
+      notifyListeners();
+      if (!await InternetConnectionService.instance.hasConnection()) {
+        throw InternetException();
+      }
+
+      if (singleFeedBack == null) {
+        AppRouter.toastificationSnackBar(
+            "Error", "Review Not Found", ToastificationType.error);
+        return;
+      }
+
       String? userToken = await localStorageService.getUserToken();
       await _reviewsService.toggleFavorite(userToken!, singleFeedBack!.id);
+
       toggleIsReviewFavorite();
       isReviewFavorite
           ? AppRouter.toastificationSnackBar(
