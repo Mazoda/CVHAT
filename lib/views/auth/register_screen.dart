@@ -80,7 +80,5 @@ Widget _getAuthWidget(AuthState state) {
       return const OtpWidget();
     case AuthState.confirmPassword:
       return const ConfirmPasswordWidget();
-    default:
-      return const LoginWidget();
   }
 }

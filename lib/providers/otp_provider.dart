@@ -1,4 +1,5 @@
 import 'package:cvhat/app_router.dart';
+import 'package:cvhat/models/api_response.dart';
 import 'package:cvhat/services/otp_service.dart';
 import 'package:flutter/material.dart';
 import 'package:toastification/toastification.dart';
@@ -10,15 +11,12 @@ class OTPProvider extends ChangeNotifier {
   final OTPService _otpService = OTPService.otpService;
 
   bool _isLoading = false;
-  String? _errorMessage;
   bool _nextStep = false;
   String? _token;
 
   bool get isLoading => _isLoading;
 
   bool get nextStep => _nextStep;
-
-  String? get errorMessage => _errorMessage;
 
   TextEditingController email = TextEditingController();
 
@@ -40,7 +38,6 @@ class OTPProvider extends ChangeNotifier {
   Future<void> sendOtp() async {
     _isLoading = true;
     _nextStep = false;
-    _errorMessage = null;
     notifyListeners();
 
     try {
@@ -62,24 +59,21 @@ class OTPProvider extends ChangeNotifier {
       if (!await InternetConnectionService.instance.hasConnection()) {
         throw InternetException();
       }
-      final response = await _otpService.sendOtp(trimmedEmail);
+      final ApiResponse responseData = await _otpService.sendOtp(trimmedEmail);
 
-      if (response.statusCode != 200) {
+      if (!responseData.success) {
         _nextStep = false;
         AppRouter.toastificationSnackBar(
-            "Error", response.data["message"], ToastificationType.error);
+            "Error", responseData.message, ToastificationType.error);
         clearControllers();
-      } else {
-        _nextStep = true;
-        AppRouter.toastificationSnackBar(
-            "Success", "OTP sent successfully!", ToastificationType.success);
+        return;
       }
+      _nextStep = true;
+      AppRouter.toastificationSnackBar(
+          "Success", "OTP sent successfully!", ToastificationType.success);
     } catch (e) {
-      _nextStep = false;
-      _errorMessage = e.toString();
-      AppRouter.toastificationSnackBar("Error",
-          "There is no Account with this Email.", ToastificationType.error);
-      clearControllers();
+      AppRouter.toastificationSnackBar(
+          "Error", e.toString().split(":")[1], ToastificationType.error);
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -89,7 +83,6 @@ class OTPProvider extends ChangeNotifier {
   Future<void> verifyOtp() async {
     _isLoading = true;
     _nextStep = false;
-    _errorMessage = null;
     notifyListeners();
 
     try {
@@ -101,25 +94,22 @@ class OTPProvider extends ChangeNotifier {
       if (!await InternetConnectionService.instance.hasConnection()) {
         throw InternetException();
       }
-      final response =
+      final ApiResponse responseData =
           await _otpService.verifyOtp(email.text.trim(), getOtpCode());
 
-      if (response.statusCode == 200 && response.data["status"] == "success") {
-        _token = response.data["data"]["token"];
-        _nextStep = true;
-        AppRouter.toastificationSnackBar(
-            "Success", "OTP Verified!", ToastificationType.success);
-      } else {
+      if (!responseData.success) {
         _nextStep = false;
-        _errorMessage = response.data["message"];
         AppRouter.toastificationSnackBar(
-            "Error", _errorMessage!, ToastificationType.error);
+            "Error", responseData.message, ToastificationType.error);
+        return;
       }
-    } catch (e) {
-      _nextStep = false;
-      _errorMessage = e.toString();
+      _token = responseData.data["token"];
+      _nextStep = true;
       AppRouter.toastificationSnackBar(
-          "Error", _errorMessage!, ToastificationType.error);
+          "Success", responseData.message, ToastificationType.success);
+    } catch (e) {
+      AppRouter.toastificationSnackBar(
+          "Error", e.toString().split(":")[1], ToastificationType.error);
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -136,46 +126,45 @@ class OTPProvider extends ChangeNotifier {
     }
 
     if (newPassword.text.length < 8 || newPassword.text.isEmpty) {
-      _errorMessage = "Password must be at least 8 characters long!";
       AppRouter.toastificationSnackBar(
-          "Error", _errorMessage!, ToastificationType.error);
+          "Error",
+          "Password must be at least 8 characters long!",
+          ToastificationType.error);
       notifyListeners();
       return;
     }
 
     if (newPassword.text.trim() != confirmNewPassword.text.trim()) {
-      _errorMessage = "New password and confirm password do not match!";
       AppRouter.toastificationSnackBar(
-          "Error", _errorMessage!, ToastificationType.error);
+          "Error",
+          "New password and confirm password do not match!",
+          ToastificationType.error);
       notifyListeners();
       return;
     }
 
     _isLoading = true;
-    _errorMessage = null;
-
     notifyListeners();
     try {
       if (!await InternetConnectionService.instance.hasConnection()) {
         throw InternetException();
       }
-      final response =
+      final ApiResponse responseData =
           await _otpService.resetPassword(_token!, newPassword.text.trim());
-      if (response.statusCode == 200 && response.data["status"] == "success") {
-        _nextStep = true;
-        AppRouter.toastificationSnackBar("Success",
-            "Password reset successfully!", ToastificationType.success);
-      } else {
+
+      if (!responseData.success) {
         _nextStep = false;
-        _errorMessage = response.data["message"];
         AppRouter.toastificationSnackBar(
-            "Error", _errorMessage!, ToastificationType.error);
+            "Error", responseData.message, ToastificationType.error);
+        return;
       }
-    } catch (e) {
-      _nextStep = false;
-      _errorMessage = e.toString();
+
+      _nextStep = true;
       AppRouter.toastificationSnackBar(
-          "Error", _errorMessage!, ToastificationType.error);
+          "Success", responseData.message, ToastificationType.success);
+    } catch (e) {
+      AppRouter.toastificationSnackBar(
+          "Error", e.toString().split(":")[1], ToastificationType.error);
     } finally {
       _isLoading = false;
       notifyListeners();

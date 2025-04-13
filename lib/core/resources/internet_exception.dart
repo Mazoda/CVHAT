@@ -1,6 +1,10 @@
 class InternetException implements Exception {
+  final dynamic message = "No Internet Connection! Check your connection";
+
   @override
   String toString() {
-    return "No Internet Connection";
+    Object? message = this.message;
+    if (message == null) return "Exception";
+    return "Exception: $message";
   }
 }

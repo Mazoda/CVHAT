@@ -1,4 +1,5 @@
 import 'package:cvhat/constants/api_endpoints.dart';
+import 'package:cvhat/models/api_response.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 
@@ -7,11 +8,11 @@ class OTPService {
 
   static OTPService otpService = OTPService._();
   final Dio _dio = Dio(BaseOptions(
-    connectTimeout: const Duration(seconds: 20),
-    receiveTimeout: const Duration(seconds: 20),
-  ));
+      connectTimeout: const Duration(seconds: 20),
+      receiveTimeout: const Duration(seconds: 20),
+      validateStatus: (status) => true));
 
-  Future<Response> sendOtp(String email) async {
+  Future<ApiResponse<dynamic>> sendOtp(String email) async {
     try {
       Response response = await _dio.post(
         ApiEndPoints.sendOtp,
@@ -25,19 +26,19 @@ class OTPService {
           print("OTP sent successfully");
           print(response.data["message"]);
         }
-        return response;
+        return ApiResponse.success(
+            data: response.data["data"], message: response.data["message"][0]);
       } else {
-        throw Exception("Failed to send OTP");
+        return ApiResponse.failure(message: response.data["message"][0]);
       }
+    } on DioException {
+      return ApiResponse.networkError();
     } catch (e) {
-      if (kDebugMode) {
-        print("Error: $e");
-      }
-      throw Exception("Error sending OTP: $e");
+      return ApiResponse.unknownError();
     }
   }
 
-  Future<Response> verifyOtp(String email, String otpCode) async {
+  Future<ApiResponse<dynamic>> verifyOtp(String email, String otpCode) async {
     try {
       Response response = await _dio.post(
         ApiEndPoints.verifyOtp,
@@ -51,19 +52,20 @@ class OTPService {
           print("OTP verified successfully");
           print(response.data["message"]);
         }
-        return response;
+        return ApiResponse.success(
+            data: response.data["data"], message: response.data["message"][0]);
       } else {
-        throw Exception("Invalid OTP code");
+        return ApiResponse.failure(message: response.data["message"][0]);
       }
+    } on DioException {
+      return ApiResponse.networkError();
     } catch (e) {
-      if (kDebugMode) {
-        print("Error: $e");
-      }
-      throw Exception("Invalid OTP code");
+      return ApiResponse.unknownError();
     }
   }
 
-  Future<Response> resetPassword(String token, String newPassword) async {
+  Future<ApiResponse<dynamic>> resetPassword(
+      String token, String newPassword) async {
     try {
       Response response = await _dio.post(
         ApiEndPoints.resetPassword,
@@ -86,12 +88,15 @@ class OTPService {
           print("Password reset successfully");
           print(response.data["message"]);
         }
-        return response;
+        return ApiResponse.success(
+            data: response.data["data"], message: response.data["message"][0]);
       } else {
-        throw Exception("Failed to reset password");
+        return ApiResponse.failure(message: response.data["message"][0]);
       }
+    } on DioException {
+      return ApiResponse.networkError();
     } catch (e) {
-      throw Exception("Error resetting password: $e");
+      return ApiResponse.unknownError();
     }
   }
 }

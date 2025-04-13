@@ -1,5 +1,3 @@
-import 'package:cvhat/services/internet_connection_service.dart';
-
 class ApiEndPoints {
   static const String baseUrl =
       "https://cvhat-awcmfwged7cvhzb6.francecentral-01.azurewebsites.net";

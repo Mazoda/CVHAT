@@ -1,4 +1,3 @@
-import 'package:cvhat/app_router.dart';
 import 'package:cvhat/core/resources/app_colors.dart';
 import 'package:cvhat/models/review_model.dart';
 import 'package:cvhat/providers/feedback_provider.dart';

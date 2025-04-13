@@ -1,4 +1,5 @@
 import 'package:cvhat/constants/api_endpoints.dart';
+import 'package:cvhat/models/api_response.dart';
 import 'package:cvhat/models/profile_model.dart';
 import 'package:dio/dio.dart';
 import 'package:file_picker/file_picker.dart';
@@ -8,11 +9,11 @@ class ProfileService {
 
   static ProfileService profileService = ProfileService._();
   final Dio _dio = Dio(BaseOptions(
-    connectTimeout: const Duration(seconds: 20),
-    receiveTimeout: const Duration(seconds: 20),
-  ));
+      connectTimeout: const Duration(seconds: 20),
+      receiveTimeout: const Duration(seconds: 20),
+      validateStatus: (status) => true));
 
-  Future<Profile> getUserProfile(String userToken) async {
+  Future<ApiResponse<Profile>> getUserProfile(String userToken) async {
     try {
       final response = await _dio.get(ApiEndPoints.getProfile,
           options: Options(
@@ -20,27 +21,30 @@ class ProfileService {
               "Authorization": "Bearer $userToken",
             },
           ));
-      print(response.toString());
       if (response.statusCode == 200) {
         final Map<String, dynamic> profile = response.data["data"]["profile"];
 
         if (profile.isNotEmpty) {
-          return Profile.fromJson(profile);
+          return ApiResponse.success(
+              data: Profile.fromJson(profile),
+              message: response.data["message"][0]);
         }
       }
-      throw Exception("Failed to load profile");
+      return ApiResponse.failure(message: response.data["message"]);
+    } on DioException {
+      return ApiResponse.networkError();
     } catch (e) {
-      throw Exception("Error fetching Profile: $e");
+      return ApiResponse.unknownError();
     }
   }
 
-  Future<Profile> postAvatar(String userToken, PlatformFile avatarFile) async {
+  Future<ApiResponse<Profile>> postAvatar(
+      String userToken, PlatformFile avatarFile) async {
     try {
-      print("Uploading Avatar in Profile service");
-
       MultipartFile multiPartFile = await MultipartFile.fromFile(
         avatarFile.path!,
         filename: avatarFile.name,
+        // TODO: add jpeg in accepted types
         contentType: DioMediaType("image", "jpg"),
       );
       FormData data = FormData.fromMap({'avatar': multiPartFile});
@@ -53,22 +57,22 @@ class ProfileService {
         ),
         data: data,
       );
-      print(response.toString());
       if (response.statusCode == 200) {
-        return Profile.fromJson(response.data["data"]["profile"]);
-      } else {
-        throw Exception("Error Posting Avatar Profile!");
+        return ApiResponse.success(
+            data: Profile.fromJson(response.data["data"]["profile"]),
+            message: response.data["message"][0]);
       }
-    } catch (error) {
-      throw Exception(error.toString());
+      return ApiResponse.failure(message: response.data["message"]);
+    } on DioException {
+      return ApiResponse.networkError();
+    } catch (e) {
+      return ApiResponse.unknownError();
     }
   }
 
-  Future<Profile> updateUserName(
+  Future<ApiResponse<Profile>> updateUserName(
       String userToken, String firstName, String lastName) async {
     try {
-      print("Updating user name in Profile service...");
-
       Map<String, dynamic> data = {
         "firstName": firstName,
         "lastName": lastName,
@@ -85,29 +89,26 @@ class ProfileService {
         data: data,
       );
 
-      print(response.toString());
-
       if (response.statusCode == 200) {
-        return Profile.fromJson(response.data["data"]["profile"]);
-      } else {
-        throw Exception("Error updating profile!");
+        return ApiResponse.success(
+            data: Profile.fromJson(response.data["data"]["profile"]),
+            message: response.data["message"][0]);
       }
-    } catch (error) {
-      throw Exception("Profile update failed: ${error.toString()}");
+      return ApiResponse.failure(message: response.data["message"]);
+    } on DioException {
+      return ApiResponse.networkError();
+    } catch (e) {
+      return ApiResponse.unknownError();
     }
   }
 
-  Future<void> changePassword(
+  Future<ApiResponse> changePassword(
       String userToken, String oldPassword, String newPassword) async {
     try {
-      print("Changing password at: ${ApiEndPoints.postNewPassword}");
-
       Map<String, dynamic> data = {
         "oldPassword": oldPassword,
         "newPassword": newPassword,
       };
-
-      print("Request Data: $data");
 
       Response response = await _dio.post(
         ApiEndPoints.postNewPassword,
@@ -117,22 +118,18 @@ class ProfileService {
             "Content-Type": "application/json",
           },
         ),
-        data: data, // Send JSON payload
+        data: data,
       );
 
-      print("Response: ${response.data}");
-
       if (response.statusCode == 200) {
-        print("Password changed successfully");
-      } else {
-        throw Exception("Error changing password!");
+        return ApiResponse.success(
+            data: [], message: response.data["message"][0]);
       }
-    } catch (error) {
-      if (error is DioException) {
-        print(
-            "Error Response: ${error.response?.data}"); // Print server error details
-      }
-      throw Exception("Password change failed: ${error.toString()}");
+      return ApiResponse.failure(message: response.data["message"]);
+    } on DioException {
+      return ApiResponse.networkError();
+    } catch (e) {
+      return ApiResponse.unknownError();
     }
   }
 }
