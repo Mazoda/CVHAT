@@ -1,9 +1,12 @@
 import 'package:cvhat/app_router.dart';
+import 'package:cvhat/models/api_response.dart';
 import 'package:cvhat/providers/auth_form_provider.dart';
+import 'package:cvhat/providers/reviews_provider.dart';
 import 'package:cvhat/services/local_storage_service.dart';
 import 'package:cvhat/views/auth/register_screen.dart';
 import 'package:cvhat/views/home_screen/home_page.dart';
 import 'package:flutter/foundation.dart';
+import 'package:provider/provider.dart';
 import 'package:toastification/toastification.dart';
 import '../core/resources/internet_exception.dart';
 import '../models/user_model.dart';
@@ -16,8 +19,6 @@ class AuthProvider extends ChangeNotifier {
       LocalStorageService.localStorageService;
   final AuthFormProvider authFormProvider = AuthFormProvider.authFormProvider;
   bool isLoading = false;
-  late String error;
-  late String message;
   late dynamic user;
 
   Future login() async {
@@ -46,19 +47,21 @@ class AuthProvider extends ChangeNotifier {
     try {
       isLoading = true;
       notifyListeners();
+
       if (!await InternetConnectionService.instance.hasConnection()) {
         throw InternetException();
       }
       String email = authFormProvider.emailController.text;
       String password = authFormProvider.passwordController.text;
-      final responseData = await _authService.login(email, password);
-
-      final userData = responseData["data"];
+      final ApiResponse responseData =
+          await _authService.login(email, password);
+      if (!responseData.success) {
+        return AppRouter.toastificationSnackBar(
+            "Error", responseData.message, ToastificationType.error);
+      }
+      final userData = responseData.data;
       user = User.fromJson(userData);
 
-      message = responseData["message"].isNotEmpty == true
-          ? responseData["message"][0]
-          : "Login successful";
       await localStorageService.saveUserData(
         token: user.token,
         firstName: user.firstName,
@@ -67,16 +70,15 @@ class AuthProvider extends ChangeNotifier {
       );
       AppRouter.pushWithReplacement(HomePage());
       AppRouter.toastificationSnackBar(
-          "Success", message, ToastificationType.success);
+          "Success", responseData.message, ToastificationType.success);
       authFormProvider.clearControllers();
     } catch (e) {
-      error = e.toString().split(":")[1]; // Clean exception message
       AppRouter.toastificationSnackBar(
-          "Error", error, ToastificationType.error);
+          "Error", e.toString().split(":")[1], ToastificationType.error);
+    } finally {
+      isLoading = false;
+      notifyListeners();
     }
-
-    isLoading = false;
-    notifyListeners();
   }
 
   Future<void> loadUser() async {
@@ -98,22 +100,33 @@ class AuthProvider extends ChangeNotifier {
   }
 
   Future<void> logout() async {
-    isLoading = true;
-    notifyListeners();
-    if (!await InternetConnectionService.instance.hasConnection()) {
-      throw InternetException();
-    }
-    String? userToken = await localStorageService.getUserToken();
-    bool res = await _authService.logout(userToken!);
-    if (res) {
+    try {
+      isLoading = true;
+      notifyListeners();
+      if (!await InternetConnectionService.instance.hasConnection()) {
+        throw InternetException();
+      }
+      String? userToken = await localStorageService.getUserToken();
+      ApiResponse responseData = await _authService.logout(userToken!);
+      if (!responseData.success) {
+        AppRouter.toastificationSnackBar(
+            "Error", responseData.message, ToastificationType.error);
+        return;
+      }
+
       AppRouter.pushAndRemoveUntil(const RegisterScreen());
       user = null;
-      notifyListeners();
-
       await localStorageService.clearUserData();
+      Provider.of<ReviewsProvider>(AppRouter.navKey.currentContext!,
+              listen: false)
+          .clearAllReviewsLists();
+    } catch (e) {
+      AppRouter.toastificationSnackBar(
+          "Error", e.toString().split(":")[1], ToastificationType.error);
+    } finally {
+      isLoading = false;
+      notifyListeners();
     }
-    isLoading = false;
-    notifyListeners();
   }
 
   Future<bool> signUp() async {
@@ -148,30 +161,28 @@ class AuthProvider extends ChangeNotifier {
       String lastName = authFormProvider.lastNameController.text;
       String email = authFormProvider.emailController.text;
       String password = authFormProvider.passwordController.text;
-      final responseMessage = await _authService.signUp(
+      final ApiResponse responseData = await _authService.signUp(
         firstName,
         lastName,
         email,
         password,
       );
-
-      message = responseMessage.isNotEmpty == true
-          ? responseMessage
-          : "Sign-up successful";
-
+      if (!responseData.success) {
+        AppRouter.toastificationSnackBar(
+            "Error", responseData.message, ToastificationType.error);
+        return responseData.success;
+      }
       AppRouter.toastificationSnackBar(
-          "Success", message, ToastificationType.success);
-      isLoading = false;
-      notifyListeners();
+          "Success", responseData.message, ToastificationType.success);
       authFormProvider.clearControllers();
-      return true;
+      return responseData.success;
     } catch (e) {
-      error = e.toString();
+      AppRouter.toastificationSnackBar(
+          "Error", e.toString().split(":")[1], ToastificationType.error);
+      return false;
+    } finally {
       isLoading = false;
       notifyListeners();
-      AppRouter.toastificationSnackBar(
-          "Error", error, ToastificationType.error);
     }
-    return false;
   }
 }

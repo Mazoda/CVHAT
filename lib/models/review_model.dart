@@ -1,6 +1,5 @@
 import 'package:cvhat/models/comment_model.dart';
 import 'package:cvhat/models/cv_model.dart';
-import 'package:cvhat/utils/date_fotmating.dart';
 
 class Review {
   final int id;

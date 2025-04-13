@@ -1,4 +1,5 @@
 import 'package:cvhat/constants/api_endpoints.dart';
+import 'package:cvhat/models/api_response.dart';
 import 'package:dio/dio.dart';
 
 class AuthService {
@@ -6,11 +7,11 @@ class AuthService {
 
   static AuthService authService = AuthService._();
   final Dio _dio = Dio(BaseOptions(
-    connectTimeout: const Duration(seconds: 10),
-    receiveTimeout: const Duration(seconds: 10),
-  ));
+      connectTimeout: const Duration(seconds: 20),
+      receiveTimeout: const Duration(seconds: 20),
+      validateStatus: (status) => true));
 
-  Future<dynamic> login(String email, String password) async {
+  Future<ApiResponse<dynamic>> login(String email, String password) async {
     try {
       Response response = await _dio.post(
         ApiEndPoints.userLogin,
@@ -18,23 +19,20 @@ class AuthService {
         options: Options(headers: {"Content-Type": "application/json"}),
       );
 
-      if (response.statusCode == 200 && response.data != null) {
-        return response.data;
+      if (response.statusCode == 200) {
+        return ApiResponse.success(
+            data: response.data["data"], message: response.data["message"][0]);
       } else {
-        throw Exception(response.data?["message"]?[0] ?? "Unknown error");
+        return ApiResponse.failure(message: response.data["message"][0]);
       }
-    } on DioException catch (e) {
-      if (e.response != null && e.response!.data is Map<String, dynamic>) {
-        throw Exception(
-            e.response!.data["message"]?[0] ?? "Something went wrong");
-      }
-      throw Exception("Network error. Please try again.");
+    } on DioException {
+      return ApiResponse.networkError();
     } catch (e) {
-      throw Exception("An unexpected error occurred.");
+      return ApiResponse.unknownError();
     }
   }
 
-  Future<dynamic> signUp(
+  Future<ApiResponse<dynamic>> signUp(
       String firstName, String lastName, String email, String password) async {
     try {
       Response response = await _dio.post(ApiEndPoints.userSignup,
@@ -46,22 +44,19 @@ class AuthService {
           },
           options: Options(headers: {"Content-Type": "application/json"}));
       if (response.statusCode == 200) {
-        return response.data["message"][0];
+        return ApiResponse.success(
+            data: response.data["data"], message: response.data["message"][0]);
       } else {
-        throw Exception(response.data["message"]);
+        return ApiResponse.failure(message: response.data["message"][0]);
       }
-    } on DioException catch (e) {
-      if (e.response != null) {
-        throw Exception(e.response!.data["message"][0]);
-      } else {
-        throw Exception("Network error. Please try again.");
-      }
+    } on DioException {
+      return ApiResponse.networkError();
     } catch (e) {
-      throw Exception("Something Went Wrong");
+      return ApiResponse.unknownError();
     }
   }
 
-  Future<bool> logout(String userToken) async {
+  Future<ApiResponse<dynamic>> logout(String userToken) async {
     try {
       Response response = await _dio.post(
         ApiEndPoints.userLogout,
@@ -70,14 +65,15 @@ class AuthService {
         ),
       );
       if (response.statusCode == 200) {
-        return true;
+        return ApiResponse.success(
+            data: response.data["data"], message: response.data["message"][0]);
       } else {
-        return false;
+        return ApiResponse.failure(message: response.data["message"][0]);
       }
-    } on DioException catch (e) {
-      return false;
+    } on DioException {
+      return ApiResponse.networkError();
     } catch (e) {
-      return false;
+      return ApiResponse.unknownError();
     }
   }
 }

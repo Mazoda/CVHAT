@@ -52,7 +52,6 @@ class ConfirmDialog extends StatelessWidget {
                   return TextButton(
                     onPressed: () async {
                       AppRouter.popWidget();
-                      reviewsProvider.clearAllReviewsLists();
                       await authProvider.logout();
                     },
                     style: TextButton.styleFrom(

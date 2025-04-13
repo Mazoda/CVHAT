@@ -1,4 +1,5 @@
 import 'package:cvhat/constants/api_endpoints.dart';
+import 'package:cvhat/models/api_response.dart';
 import 'package:cvhat/models/cv_model.dart';
 import 'package:dio/dio.dart';
 import 'package:file_picker/file_picker.dart';
@@ -9,40 +10,41 @@ class ReviewsService {
 
   static ReviewsService reviewsService = ReviewsService._();
   final Dio _dio = Dio(BaseOptions(
-    connectTimeout: const Duration(seconds: 20),
-    receiveTimeout: const Duration(seconds: 20),
-  ));
+      connectTimeout: const Duration(seconds: 20),
+      receiveTimeout: const Duration(seconds: 20),
+      validateStatus: (status) => true));
   final Dio _dioPostCV = Dio(BaseOptions(
-    connectTimeout: const Duration(seconds: 20),
-    receiveTimeout: const Duration(seconds: 60),
-  ));
+      connectTimeout: const Duration(seconds: 20),
+      receiveTimeout: const Duration(seconds: 60),
+      validateStatus: (status) => true));
 
-  Future<List<Review>> _fetchReviews(String userToken, String endpoint) async {
+  Future<ApiResponse<List<Review>>> _fetchReviews(
+      String userToken, String endpoint) async {
     try {
-      final response = await _dio.get(
+      Response response = await _dio.get(
         endpoint,
         options: Options(
           headers: {
-            "Authorization":
-                "Bearer $userToken", // Include userToken in headers
+            "Authorization": "Bearer $userToken",
           },
         ),
       );
 
       if (response.statusCode == 200) {
         final List<dynamic> reviews = response.data["data"]["reviews"];
-        return reviews.map((json) => Review.fromJson(json)).toList();
-
-        // if (reviews.isNotEmpty) {
-        // }
+        return ApiResponse.success(
+            data: reviews.map((json) => Review.fromJson(json)).toList());
       }
-      throw Exception("Failed to load reviews");
+      return ApiResponse.failure(message: response.data["message"][0]);
+    } on DioException {
+      return ApiResponse.networkError();
     } catch (e) {
-      throw Exception("Error fetching reviews: $e");
+      return ApiResponse.unknownError();
     }
   }
 
-  Future<Review> fetchReviewByID(String userToken, int reviewID) async {
+  Future<ApiResponse<Review>> fetchReviewByID(
+      String userToken, int reviewID) async {
     try {
       final response = await _dio.get(
         "${ApiEndPoints.getUserReviews}/$reviewID",
@@ -57,28 +59,31 @@ class ReviewsService {
       if (response.statusCode == 200 && response.data["status"] == "success") {
         final reviewJson =
             response.data["data"]["review"]; // Extract first review
-        return Review.fromJson(reviewJson);
-      } else {
-        throw Exception("Failed to fetch review");
+        return ApiResponse.success(data: Review.fromJson(reviewJson));
       }
-    } catch (error) {
-      throw Exception("Error fetching review: $error");
+      return ApiResponse.failure(message: response.data["message"][0]);
+    } on DioException {
+      return ApiResponse.networkError();
+    } catch (e) {
+      return ApiResponse.unknownError();
     }
   }
 
-  Future<List<Review>> fetchAllReviews(String userToken) async {
+  Future<ApiResponse<List<Review>>> fetchAllReviews(String userToken) async {
     return await _fetchReviews(userToken, ApiEndPoints.getUserReviews);
   }
 
-  Future<List<Review>> fetchRecentReviews(String userToken) async {
+  Future<ApiResponse<List<Review>>> fetchRecentReviews(String userToken) async {
     return await _fetchReviews(userToken, ApiEndPoints.getUserRecentReviews);
   }
 
-  Future<List<Review>> fetchFavoriteReviews(String userToken) async {
+  Future<ApiResponse<List<Review>>> fetchFavoriteReviews(
+      String userToken) async {
     return await _fetchReviews(userToken, ApiEndPoints.getUserFavoriteReviews);
   }
 
-  Future<Map<String, int>> fetchReviewsCounts(String userToken) async {
+  Future<ApiResponse<Map<String, int>>> fetchReviewsCounts(
+      String userToken) async {
     try {
       final response = await _dio.get(
         ApiEndPoints.getUserReviewsCount,
@@ -91,21 +96,21 @@ class ReviewsService {
       );
 
       if (response.statusCode == 200) {
-        return {
+        return ApiResponse.success(data: {
           "aiReviewCount": response.data["data"]["aiReviewCount"],
           "recruiterReviewCount": response.data["data"]["recruiterReviewCount"]
-        };
+        });
       }
-      throw Exception("Failed to load Reviews Counts");
+      return ApiResponse.failure(message: response.data["message"][0]);
+    } on DioException {
+      return ApiResponse.networkError();
     } catch (e) {
-      throw Exception("Error fetching reviews: $e");
+      return ApiResponse.unknownError();
     }
   }
 
-  Future<CV> postCV(String userToken, PlatformFile pdfFile) async {
+  Future<ApiResponse<CV>> postCV(String userToken, PlatformFile pdfFile) async {
     try {
-      print("Uploading cv in service Cv in Service");
-
       MultipartFile multiPartFile = await MultipartFile.fromFile(
         pdfFile.path!,
         filename: pdfFile.name,
@@ -124,16 +129,20 @@ class ReviewsService {
       );
 
       if (response.statusCode == 200) {
-        return CV.fromJson(response.data["data"]["cv"]);
-      } else {
-        throw Exception("Error Posting CV");
+        return ApiResponse.success(
+            data: CV.fromJson(response.data["data"]["cv"]));
       }
+
+      return ApiResponse.failure(message: response.data["message"][0]);
+    } on DioException {
+      return ApiResponse.networkError();
     } catch (e) {
-      throw Exception(e.toString());
+      return ApiResponse.unknownError();
     }
   }
 
-  Future<Review> postAiReview(String userToken, int cvID, String title) async {
+  Future<ApiResponse<Review>> postAiReview(
+      String userToken, int cvID, String title) async {
     try {
       print("getting review in Service");
       Response response = await _dioPostCV.post(
@@ -147,19 +156,19 @@ class ReviewsService {
       );
 
       if (response.statusCode == 200) {
-        return Review.fromJson(response.data["data"]["review"]);
-      } else {
-        throw Exception("Error Posting AI Review");
+        return ApiResponse.success(
+            data: Review.fromJson(response.data["data"]["review"]));
       }
-    } on DioException catch (e) {
-      throw Exception(e.toString());
+      return ApiResponse.failure(message: response.data["message"][0]);
+    } on DioException {
+      return ApiResponse.networkError();
     } catch (e) {
-      throw Exception(e.toString());
+      return ApiResponse.unknownError();
     }
   }
 
-  Future<bool> toggleFavorite(String userToken, int reviewID) async {
-    print("in toggle favorite in service");
+  Future<ApiResponse<bool>> toggleFavorite(
+      String userToken, int reviewID) async {
     try {
       Response response = await _dio.post(
         "${ApiEndPoints.toggleFavorite}/$reviewID",
@@ -171,12 +180,13 @@ class ReviewsService {
       );
 
       if (response.statusCode == 200) {
-        return true;
-      } else {
-        return false;
+        return ApiResponse.success(data: true);
       }
+      return ApiResponse.failure(message: response.data["message"][0]);
+    } on DioException {
+      return ApiResponse.networkError();
     } catch (e) {
-      throw Exception(e.toString());
+      return ApiResponse.unknownError();
     }
   }
 }

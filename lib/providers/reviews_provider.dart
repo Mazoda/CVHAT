@@ -1,4 +1,5 @@
 import 'package:cvhat/app_router.dart';
+import 'package:cvhat/models/api_response.dart';
 import 'package:cvhat/services/local_storage_service.dart';
 import 'package:flutter/foundation.dart';
 import 'package:toastification/toastification.dart';
@@ -19,7 +20,6 @@ class ReviewsProvider extends ChangeNotifier {
       LocalStorageService.localStorageService;
 
   bool _isLoading = false;
-  String? _errorMessage;
 
   List<Review> get reviews => _reviews;
 
@@ -33,11 +33,8 @@ class ReviewsProvider extends ChangeNotifier {
 
   bool get isLoading => _isLoading;
 
-  String? get errorMessage => _errorMessage;
-
   Future<void> fetchAllReviews() async {
     _isLoading = true;
-    _errorMessage = null;
     notifyListeners();
 
     try {
@@ -45,9 +42,10 @@ class ReviewsProvider extends ChangeNotifier {
         throw InternetException();
       }
       String? userToken = await localStorageService.getUserToken();
-      _reviews = await _reviewsService.fetchAllReviews(userToken!);
+      _reviews = (await _reviewsService.fetchAllReviews(userToken!)).data;
     } catch (e) {
-      _errorMessage = e.toString();
+      AppRouter.toastificationSnackBar(
+          "Error", e.toString().split(":")[1], ToastificationType.error);
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -56,7 +54,6 @@ class ReviewsProvider extends ChangeNotifier {
 
   Future<void> fetchRecentReviews() async {
     _isLoading = true;
-    _errorMessage = null;
     notifyListeners();
     if (kDebugMode) {
       print("test in fetch provider");
@@ -66,14 +63,12 @@ class ReviewsProvider extends ChangeNotifier {
         throw InternetException();
       }
       String? userToken = await localStorageService.getUserToken();
-      _recentReviews = await _reviewsService.fetchRecentReviews(userToken!);
+      ApiResponse<List<Review>> responseData =
+          await _reviewsService.fetchRecentReviews(userToken!);
+      _recentReviews = responseData.data;
     } catch (e) {
-      _errorMessage = e.toString();
-      if (kDebugMode) {
-        print(e.toString());
-      }
       AppRouter.toastificationSnackBar(
-          "Error", _errorMessage!, ToastificationType.error);
+          "Error", e.toString().split(":")[1], ToastificationType.error);
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -82,7 +77,6 @@ class ReviewsProvider extends ChangeNotifier {
 
   Future<void> fetchFavoriteReviews() async {
     _isLoading = true;
-    _errorMessage = null;
     notifyListeners();
 
     try {
@@ -90,11 +84,11 @@ class ReviewsProvider extends ChangeNotifier {
         throw InternetException();
       }
       String? userToken = await localStorageService.getUserToken();
-      _favoriteReviews = await _reviewsService.fetchFavoriteReviews(userToken!);
+      _favoriteReviews =
+          (await _reviewsService.fetchFavoriteReviews(userToken!)).data;
     } catch (e) {
-      _errorMessage = e.toString();
       AppRouter.toastificationSnackBar(
-          "Error", "Error Fetching Favorite Reviews", ToastificationType.error);
+          "Error", e.toString().split(":")[1], ToastificationType.error);
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -107,14 +101,16 @@ class ReviewsProvider extends ChangeNotifier {
         throw InternetException();
       }
       String? userToken = await localStorageService.getUserToken();
-      final res = await _reviewsService.fetchReviewsCounts(userToken!);
-      _aiReviewsCount = res["aiReviewCount"].toString();
-      _recruiterReviewsCount = res["recruiterReviewCount"].toString();
+      final response = await _reviewsService.fetchReviewsCounts(userToken!);
+      _aiReviewsCount = response.data["aiReviewCount"].toString();
+      _recruiterReviewsCount = response.data["recruiterReviewCount"].toString();
       notifyListeners();
     } catch (e) {
-      _errorMessage = e.toString();
       AppRouter.toastificationSnackBar(
-          "Error", _errorMessage!, ToastificationType.error);
+          "Error", e.toString().split(":")[1], ToastificationType.error);
+    } finally {
+      _isLoading = false;
+      notifyListeners();
     }
   }
 

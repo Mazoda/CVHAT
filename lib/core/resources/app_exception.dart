@@ -5,6 +5,8 @@ class AppException implements Exception {
 
   @override
   String toString() {
-    return message ?? "Something went wrong";
+    Object? message = this.message ?? "Something went wrong";
+    if (message == null) return "Exception";
+    return "Exception: $message";
   }
 }

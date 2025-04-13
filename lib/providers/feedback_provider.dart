@@ -1,12 +1,14 @@
 import 'package:cvhat/app_router.dart';
 import 'package:cvhat/models/cv_model.dart';
 import 'package:cvhat/models/review_model.dart';
+import 'package:cvhat/providers/reviews_provider.dart';
 import 'package:cvhat/services/local_storage_service.dart';
 import 'package:cvhat/services/reviews_service.dart';
 import 'package:cvhat/views/feedback_screen/feedback_page.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:toastification/toastification.dart' show ToastificationType;
 
 import '../core/resources/internet_exception.dart';
@@ -49,13 +51,13 @@ class FeedBackProvider extends ChangeNotifier {
       }
       String? userToken = await localStorageService.getUserToken();
       Review review =
-          await _reviewsService.fetchReviewByID(userToken!, reviewId);
+          (await _reviewsService.fetchReviewByID(userToken!, reviewId)).data;
       singleFeedBack = review;
       isReviewFavorite = singleFeedBack!.isFavorite;
       notifyListeners();
     } catch (e) {
       AppRouter.toastificationSnackBar(
-          "Error", e.toString(), ToastificationType.error);
+          "Error", e.toString().split(":")[1], ToastificationType.error);
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -88,16 +90,15 @@ class FeedBackProvider extends ChangeNotifier {
         throw InternetException();
       }
       String? userToken = await localStorageService.getUserToken();
-      postCVResponse = await _reviewsService.postCV(userToken!, selectedFile);
+      postCVResponse =
+          (await _reviewsService.postCV(userToken!, selectedFile)).data;
       notifyListeners();
       if (postCVResponse != null) {
-        // AppRouter.toastificationSnackBar(
-        //     "Success", "CV uploaded successfully", ToastificationType.success);
         await postAIReview();
       }
     } catch (e) {
       AppRouter.toastificationSnackBar(
-          "Error", "Something Went Wrong!", ToastificationType.error);
+          "Error", e.toString().split(":")[1], ToastificationType.error);
     } finally {
       _isUploading = false;
       notifyListeners();
@@ -119,14 +120,12 @@ class FeedBackProvider extends ChangeNotifier {
         throw InternetException();
       }
       String? userToken = await localStorageService.getUserToken();
-      singleFeedBack = await _reviewsService.postAiReview(
-          userToken!, postCVResponse!.id!, submitCvController.text);
+      singleFeedBack = (await _reviewsService.postAiReview(
+              userToken!, postCVResponse!.id!, submitCvController.text))
+          .data;
     } catch (e) {
-      if (kDebugMode) {
-        print(e.toString());
-      }
       AppRouter.toastificationSnackBar(
-          "Error", "Error Posting Ai Review", ToastificationType.error);
+          "Error", e.toString().split(":")[1], ToastificationType.error);
     } finally {
       _isAnalyzing = false;
       notifyListeners();
@@ -149,7 +148,9 @@ class FeedBackProvider extends ChangeNotifier {
 
       String? userToken = await localStorageService.getUserToken();
       await _reviewsService.toggleFavorite(userToken!, singleFeedBack!.id);
-
+      await Provider.of<ReviewsProvider>(AppRouter.navKey.currentContext!,
+              listen: false)
+          .fetchFavoriteReviews();
       toggleIsReviewFavorite();
       isReviewFavorite
           ? AppRouter.toastificationSnackBar(
@@ -157,9 +158,8 @@ class FeedBackProvider extends ChangeNotifier {
           : AppRouter.toastificationSnackBar("Success",
               "Removed From your Favorites.", ToastificationType.info);
     } catch (e) {
-      if (kDebugMode) {
-        print(e.toString());
-      }
+      AppRouter.toastificationSnackBar(
+          "Error", e.toString().split(":")[1], ToastificationType.error);
     } finally {
       _isLoading = false;
       notifyListeners();

@@ -1,4 +1,5 @@
 import 'package:cvhat/app_router.dart';
+import 'package:cvhat/models/api_response.dart';
 import 'package:cvhat/models/profile_model.dart';
 import 'package:cvhat/services/local_storage_service.dart';
 import 'package:cvhat/services/profile_service.dart';
@@ -21,10 +22,6 @@ class ProfileProvider extends ChangeNotifier {
 
   bool get isLoading => _isLoading;
 
-  String? _errorMessage;
-
-  String? get errorMessage => _errorMessage;
-
   PlatformFile? selectedFile;
 
   bool _isChangePassword = false;
@@ -40,19 +37,22 @@ class ProfileProvider extends ChangeNotifier {
 
   Future<void> fetchProfile() async {
     _isLoading = true;
-    _errorMessage = null;
     notifyListeners();
     try {
       if (!await InternetConnectionService.instance.hasConnection()) {
         throw InternetException();
       }
       String? userToken = await localStorageService.getUserToken();
-      _profile = await _profileService.getUserProfile(userToken!);
+      ApiResponse responseData =
+          await _profileService.getUserProfile(userToken!);
+      if (!responseData.success) {
+        return AppRouter.toastificationSnackBar(
+            "Error", responseData.message, ToastificationType.error);
+      }
+      _profile = responseData.data;
     } catch (e) {
-      _errorMessage = e.toString();
-      //print(_errorMessage);
       AppRouter.toastificationSnackBar(
-          "Error", _errorMessage!, ToastificationType.error);
+          "Error", e.toString().split(":")[1], ToastificationType.error);
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -91,16 +91,9 @@ class ProfileProvider extends ChangeNotifier {
 
       clearFile();
       _clearControllers();
-      if (!_isChangePassword) {
-        fetchProfile();
-      }
     } catch (e) {
-      if (kDebugMode) {
-        print(e.toString());
-      } else {
-        AppRouter.toastificationSnackBar(
-            "Error", "Something Went Wrong!", ToastificationType.error);
-      }
+      AppRouter.toastificationSnackBar(
+          "Error", e.toString().split(":")[1], ToastificationType.error);
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -116,31 +109,32 @@ class ProfileProvider extends ChangeNotifier {
             "Error", "Please Select Avatar!", ToastificationType.error);
         return;
       }
+      // TODO: accept jpeg and png avatar type
       if (selectedFile!.extension != "jpg") {
         AppRouter.toastificationSnackBar(
             "Error", "Please select jpg file", ToastificationType.error);
         return;
       }
-      if (kDebugMode) {
-        print("Uploading Avatar in profile provider");
-      }
       if (!await InternetConnectionService.instance.hasConnection()) {
         throw InternetException();
       }
       String? userToken = await localStorageService.getUserToken();
-      await _profileService.postAvatar(userToken!, selectedFile!);
+      ApiResponse responseData =
+          await _profileService.postAvatar(userToken!, selectedFile!);
+      if (!responseData.success) {
+        return AppRouter.toastificationSnackBar(
+            "Error", responseData.message, ToastificationType.error);
+      }
+      _profile = responseData.data;
       notifyListeners();
       AppRouter.toastificationSnackBar(
-          "Success", "Avatar Updated Successfully", ToastificationType.success);
+          "Success", responseData.message, ToastificationType.success);
     } catch (e) {
-      if (kDebugMode) {
-        print(e.toString());
-      } else {
-        AppRouter.toastificationSnackBar(
-            "Error",
-            "Something Went Wrong! Upload Avatar Failed!",
-            ToastificationType.error);
-      }
+      AppRouter.toastificationSnackBar(
+          "Error", e.toString().split(":")[1], ToastificationType.error);
+    } finally {
+      _isLoading = false;
+      notifyListeners();
     }
   }
 
@@ -152,35 +146,39 @@ class ProfileProvider extends ChangeNotifier {
         throw InternetException();
       }
       String? userToken = await localStorageService.getUserToken();
-      await _profileService.updateUserName(userToken!,
-          firstNameController.text.trim(), lastNameController.text.trim());
+      ApiResponse<Profile> responseData = await _profileService.updateUserName(
+          userToken!,
+          firstNameController.text.trim(),
+          lastNameController.text.trim());
+      if (!responseData.success) {
+        return AppRouter.toastificationSnackBar(
+            "Error", responseData.message, ToastificationType.error);
+      }
+      _profile = responseData.data;
       notifyListeners();
       AppRouter.toastificationSnackBar(
-          "Success", "Name Updated Successfully", ToastificationType.success);
+          "Success", responseData.message, ToastificationType.success);
     } catch (e) {
-      if (kDebugMode) {
-        print(e.toString());
-      } else {
-        AppRouter.toastificationSnackBar(
-            "Error",
-            "Something Went Wrong! Update User Name Failed!",
-            ToastificationType.error);
-      }
+      AppRouter.toastificationSnackBar(
+          "Error", e.toString().split(":")[1], ToastificationType.error);
+    } finally {
+      _isLoading = false;
+      notifyListeners();
     }
   }
 
   Future<void> _changePassword() async {
     if (newPasswordController.text.trim() !=
         confirmPasswordController.text.trim()) {
-      _errorMessage = "New password and confirm password do not match!";
       AppRouter.toastificationSnackBar(
-          "Error", _errorMessage!, ToastificationType.error);
+          "Error",
+          "New password and confirm password do not match!",
+          ToastificationType.error);
       notifyListeners();
       return;
     }
 
     _isLoading = true;
-    _errorMessage = null;
     notifyListeners();
 
     try {
@@ -188,22 +186,21 @@ class ProfileProvider extends ChangeNotifier {
         throw InternetException();
       }
       String? userToken = await localStorageService.getUserToken();
-      await _profileService.changePassword(userToken!,
-          oldPasswordController.text.trim(), newPasswordController.text.trim());
+      ApiResponse responseData = await _profileService.changePassword(
+          userToken!,
+          oldPasswordController.text.trim(),
+          newPasswordController.text.trim());
+      if (!responseData.success) {
+        return AppRouter.toastificationSnackBar(
+            "Error", responseData.message, ToastificationType.error);
+      }
       AppRouter.toastificationSnackBar(
-          "Success",
-          "Password changed successfully! Please Login Again.",
-          ToastificationType.success);
+          "Success", responseData.message, ToastificationType.success);
       await localStorageService.clearUserData();
       AppRouter.pushAndRemoveUntil(const RegisterScreen());
     } catch (e) {
-      if (kDebugMode) {
-        print(_errorMessage);
-      }
       AppRouter.toastificationSnackBar(
-          "Error",
-          "Something Wont Wrong!\nMake Sure you Provide the Correct Password!",
-          ToastificationType.error);
+          "Error", e.toString().split(":")[1], ToastificationType.error);
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -213,7 +210,6 @@ class ProfileProvider extends ChangeNotifier {
   Future<void> pickFile({List<String>? allowedExtensions}) async {
     try {
       _isLoading = true;
-      _errorMessage = null;
       notifyListeners();
 
       FilePickerResult? result = await FilePicker.platform.pickFiles(
@@ -224,10 +220,12 @@ class ProfileProvider extends ChangeNotifier {
       if (result != null && result.files.isNotEmpty) {
         selectedFile = result.files.first;
       } else {
-        _errorMessage = "No file selected.";
+        AppRouter.toastificationSnackBar(
+            "Error", "No file selected.", ToastificationType.error);
       }
     } catch (e) {
-      _errorMessage = "Error picking file: $e";
+      AppRouter.toastificationSnackBar(
+          "Error", e.toString().split(":")[1], ToastificationType.error);
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -236,7 +234,6 @@ class ProfileProvider extends ChangeNotifier {
 
   void clearFile() {
     selectedFile = null;
-    _errorMessage = null;
     notifyListeners();
   }
 
