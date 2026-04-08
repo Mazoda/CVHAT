@@ -14,7 +14,6 @@ A Flutter mobile app that helps job seekers improve their resumes through expert
 [![State Management](https://img.shields.io/badge/State-Provider-4FC08D)](https://pub.dev/packages/provider)
 [![Style: flutter_lints](https://img.shields.io/badge/style-flutter__lints-40C4FF.svg)](https://pub.dev/packages/flutter_lints)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](#contributing)
-<!-- TODO: Add license badge once a LICENSE file is added -->
 
 </div>
 
@@ -62,35 +61,23 @@ Built with a clean **provider → service → API** architecture, cvhat is also 
 - 🎨 **Custom Typography** — Bundled `Inter` and `PlayfairDisplay` font families
 - ✨ **Smooth Animations** — Lottie animations for empty states, loading, and feedback
 
----
-
-## Screenshots
-
-<!-- TODO: Add screenshots to assets/screenshots/ and update the table below -->
-
-| Splash | Home | Upload CV | Feedback |
-| :----: | :--: | :-------: | :------: |
-| <!-- TODO --> | <!-- TODO --> | <!-- TODO --> | <!-- TODO --> |
-
----
-
 ## Tech Stack & Architecture
 
 ### Technologies
 
-| Category | Tools |
-| --- | --- |
-| **Framework** | [Flutter](https://flutter.dev) (Dart `^3.5.3`) |
-| **State Management** | [`provider`](https://pub.dev/packages/provider) (`ChangeNotifier`) |
-| **Networking** | [`dio`](https://pub.dev/packages/dio) |
-| **Local Storage** | [`shared_preferences`](https://pub.dev/packages/shared_preferences) |
-| **Responsive UI** | [`flutter_screenutil`](https://pub.dev/packages/flutter_screenutil) |
-| **File Handling** | [`file_picker`](https://pub.dev/packages/file_picker), [`syncfusion_flutter_pdfviewer`](https://pub.dev/packages/syncfusion_flutter_pdfviewer) |
-| **Connectivity** | [`internet_connection_checker_plus`](https://pub.dev/packages/internet_connection_checker_plus) |
-| **Notifications** | [`toastification`](https://pub.dev/packages/toastification), [`awesome_snackbar_content`](https://pub.dev/packages/awesome_snackbar_content) |
-| **Animations** | [`lottie`](https://pub.dev/packages/lottie), [`animator`](https://pub.dev/packages/animator) |
-| **Localization & Formatting** | [`intl`](https://pub.dev/packages/intl) |
-| **Linting** | [`flutter_lints`](https://pub.dev/packages/flutter_lints) |
+| Category                      | Tools                                                                                                                                          |
+| ----------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Framework**                 | [Flutter](https://flutter.dev) (Dart `^3.5.3`)                                                                                                 |
+| **State Management**          | [`provider`](https://pub.dev/packages/provider) (`ChangeNotifier`)                                                                             |
+| **Networking**                | [`dio`](https://pub.dev/packages/dio)                                                                                                          |
+| **Local Storage**             | [`shared_preferences`](https://pub.dev/packages/shared_preferences)                                                                            |
+| **Responsive UI**             | [`flutter_screenutil`](https://pub.dev/packages/flutter_screenutil)                                                                            |
+| **File Handling**             | [`file_picker`](https://pub.dev/packages/file_picker), [`syncfusion_flutter_pdfviewer`](https://pub.dev/packages/syncfusion_flutter_pdfviewer) |
+| **Connectivity**              | [`internet_connection_checker_plus`](https://pub.dev/packages/internet_connection_checker_plus)                                                |
+| **Notifications**             | [`toastification`](https://pub.dev/packages/toastification), [`awesome_snackbar_content`](https://pub.dev/packages/awesome_snackbar_content)   |
+| **Animations**                | [`lottie`](https://pub.dev/packages/lottie), [`animator`](https://pub.dev/packages/animator)                                                   |
+| **Localization & Formatting** | [`intl`](https://pub.dev/packages/intl)                                                                                                        |
+| **Linting**                   | [`flutter_lints`](https://pub.dev/packages/flutter_lints)                                                                                      |
 
 <details>
 <summary><strong>Full dependency list</strong></summary>
@@ -145,8 +132,6 @@ Key conventions:
 - **Navigation** is centralized in [lib/app_router.dart](lib/app_router.dart) — use `AppRouter.pushWidget` and friends instead of calling `Navigator.of(context)` directly.
 - **Auth** uses bearer tokens stored locally via `LocalStorageService`.
 - **Endpoints** live in [lib/constants/api_endpoints.dart](lib/constants/api_endpoints.dart).
-
-For deeper architectural notes, see [CLAUDE.md](CLAUDE.md).
 
 ---
 
@@ -239,16 +224,16 @@ flutter build ios --release
 
 ## Available Commands
 
-| Command | Description |
-| --- | --- |
-| `flutter pub get` | Install project dependencies |
-| `flutter run` | Run the app on a connected device or emulator |
-| `flutter analyze` | Run static analysis (rules in [analysis_options.yaml](analysis_options.yaml)) |
-| `flutter test` | Run all tests |
-| `flutter build apk` | Build a release APK |
-| `flutter build appbundle` | Build an Android App Bundle |
-| `flutter build ios` | Build the iOS app (macOS only) |
-| `flutter clean` | Remove build artifacts |
+| Command                   | Description                                                                   |
+| ------------------------- | ----------------------------------------------------------------------------- |
+| `flutter pub get`         | Install project dependencies                                                  |
+| `flutter run`             | Run the app on a connected device or emulator                                 |
+| `flutter analyze`         | Run static analysis (rules in [analysis_options.yaml](analysis_options.yaml)) |
+| `flutter test`            | Run all tests                                                                 |
+| `flutter build apk`       | Build a release APK                                                           |
+| `flutter build appbundle` | Build an Android App Bundle                                                   |
+| `flutter build ios`       | Build the iOS app (macOS only)                                                |
+| `flutter clean`           | Remove build artifacts                                                        |
 
 ---
 
@@ -265,62 +250,6 @@ Run a single test by name:
 ```bash
 flutter test test/path/to/file_test.dart --plain-name "test name"
 ```
-
----
-
-## Contributing
-
-Contributions, issues, and feature requests are welcome! Here's the standard flow:
-
-1. **Fork** the repository
-2. **Create a feature branch** — `git checkout -b feature/amazing-feature`
-3. **Commit your changes** — `git commit -m "feat: add amazing feature"`
-4. **Push the branch** — `git push origin feature/amazing-feature`
-5. **Open a Pull Request**
-
-Please run `flutter analyze` and `flutter test` before submitting a PR. When adding a new service, follow the singleton + `ApiResponse<T>` pattern in [lib/services/auth_service.dart](lib/services/auth_service.dart). When adding a new provider, register it in [lib/providers.dart](lib/providers.dart).
-
-<!-- TODO: Add a CONTRIBUTING.md with detailed contribution guidelines -->
-
----
-
-## Roadmap
-
-<!-- TODO: Maintainer — flesh out the roadmap with planned features -->
-
-- [ ] Add screenshots and a demo video to the README
-- [ ] Internationalization (i18n) support
-- [ ] Dark mode
-- [ ] Push notifications for new feedback
-- [ ] Web build target
-- [ ] CI/CD pipeline (GitHub Actions)
-- [ ] Unit & widget test coverage
-
----
-
-## License
-
-<!-- TODO: No LICENSE file detected in the repository. Add a LICENSE file (e.g., MIT, Apache-2.0) and update this section. -->
-
-This project does not currently declare a license. Until one is added, all rights are reserved by the author.
-
----
-
-## Contact & Acknowledgments
-
-**Maintainer:** Mazoda ([@MohammedMotlaq](https://github.com/MohammedMotlaq))
-
-**Project Link:** [https://github.com/MohammedMotlaq/CVHAT](https://github.com/MohammedMotlaq/CVHAT)
-
-<!-- TODO: Add preferred contact email or social links -->
-
-### Acknowledgments
-
-- [Flutter](https://flutter.dev) and the Dart team
-- [Provider](https://pub.dev/packages/provider) for state management
-- [Syncfusion](https://www.syncfusion.com/) for the Flutter PDF viewer
-- [LottieFiles](https://lottiefiles.com/) for animations
-- All open-source authors of the packages listed in [pubspec.yaml](pubspec.yaml)
 
 ---
 
